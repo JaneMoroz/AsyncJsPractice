@@ -109,9 +109,9 @@ const getCountryData = function (country) {
     });
 };
 
-btn.addEventListener('click', function () {
-  getCountryData('australia');
-});
+// btn.addEventListener('click', function () {
+//   getCountryData('australia');
+// });
 
 // ///////////////////////////////////////////////////////////////////////////////////
 // Coding Challenge #1
@@ -126,32 +126,32 @@ btn.addEventListener('click', function () {
 // and a longitude value ('lng') (these are GPS coordinates, examples are in test
 // data below).
 
-const whereAmI = function (lat, lng) {
-  fetch(`https://geocode.xyz/${lat},${lng}}?geoit=json`)
-    .then(response => {
-      if (!response.ok) throw new Error(`${errorMsg} (${response.status})`);
+// const whereAmI = function (lat, lng) {
+//   fetch(`https://geocode.xyz/${lat},${lng}}?geoit=json`)
+//     .then(response => {
+//       if (!response.ok) throw new Error(`${errorMsg} (${response.status})`);
 
-      return response.json();
-    })
-    .then(data => {
-      console.log(`You are in ${data.region}, ${data.country}`);
-      return fetch(`https://restcountries.com/v3.1/name/${data.country}`);
-    })
-    .then(response => {
-      if (!response.ok) throw new Error(`${errorMsg} (${response.status})`);
+//       return response.json();
+//     })
+//     .then(data => {
+//       console.log(`You are in ${data.region}, ${data.country}`);
+//       return fetch(`https://restcountries.com/v3.1/name/${data.country}`);
+//     })
+//     .then(response => {
+//       if (!response.ok) throw new Error(`${errorMsg} (${response.status})`);
 
-      return response.json();
-    })
-    .then(data => renderCountry(data[0]))
-    .catch(err => console.log(`An error occured! ${err}`))
-    .finally(() => {
-      countriesContainer.style.opacity = 1;
-    });
-};
+//       return response.json();
+//     })
+//     .then(data => renderCountry(data[0]))
+//     .catch(err => console.log(`An error occured! ${err}`))
+//     .finally(() => {
+//       countriesContainer.style.opacity = 1;
+//     });
+// };
 
-whereAmI(52.508, 13.381);
-whereAmI(19.037, 72.873);
-whereAmI(-33.933, 18.474);
+// whereAmI(52.508, 13.381);
+// whereAmI(19.037, 72.873);
+// whereAmI(-33.933, 18.474);
 
 // 2. Do “reverse geocoding” of the provided coordinates. Reverse geocoding means
 // to convert coordinates to a meaningful location, like a city and country name.
@@ -182,3 +182,49 @@ whereAmI(-33.933, 18.474);
 // § Coordinates 2: 19.037, 72.873
 // § Coordinates 3: -33.933, 18.474
 // GOOD LUCK
+
+// ///////////////////////////////////////////////////////////////////////////////////
+// Promisifying the Geolocation API
+const getPosition = function () {
+  return new Promise(function (resolve, reject) {
+    // navigator.geolocation.getCurrentPosition(
+    //   position => resolve(position),
+    //   err => reject(err)
+    // );
+    navigator.geolocation.getCurrentPosition(resolve, reject);
+  });
+};
+// getPosition().then(pos => console.log(pos));
+
+const whereAmI = function () {
+  getPosition()
+    .then(pos => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+
+      return fetch(`https://geocode.xyz/${lat},${lng}?geoit=json`);
+    })
+    .then(res => {
+      if (!res.ok) throw new Error(`Problem with geocoding ${res.status}`);
+      return res.json();
+    })
+    .then(data => {
+      console.log(data);
+      console.log(`You are in ${data.city}, ${data.country}`);
+
+      return fetch(`https://restcountries.com/v3.1/name/${data.country}`);
+    })
+    .then(res => {
+      if (!res.ok) throw new Error(`Country not found (${res.status})`);
+
+      return res.json();
+    })
+    .then(data => renderCountry(data[0]))
+    .catch(err => console.error(`${err.message} 💥`))
+    .finally(() => {
+      countriesContainer.style.opacity = 1;
+    });
+};
+
+btn.addEventListener('click', whereAmI);
+
+
